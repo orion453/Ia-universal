@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net default catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Standard global security helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 1. User Entity Validation Blueprint
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'virtualCapital', 'currentPlan', 'riskLevel', 'activeStrategyId']) 
+        && data.keys().size() == 6
+        && data.uid is string && data.uid.size() <= 128
+        && data.email is string && data.email.size() <= 256
+        && data.virtualCapital is int
+        && data.currentPlan is string && data.currentPlan.size() <= 64
+        && data.riskLevel is string && data.riskLevel.size() <= 64
+        && data.activeStrategyId is string && data.activeStrategyId.size() <= 64;
+    }
+
+    // 2. TradeLog Entity Validation Blueprint
+    function isValidTradeLog(data) {
+      return data.keys().hasAll(['id', 'userUid', 'timestamp', 'symbol', 'type', 'price', 'amount', 'total', 'strategy', 'status'])
+        && data.keys().size() == 10
+        && data.id is string && data.id.size() <= 128
+        && data.userUid is string && data.userUid.size() <= 128
+        && data.timestamp is string && data.timestamp.size() <= 128
+        && data.symbol is string && data.symbol.size() <= 20
+        && (data.type == 'COMPRA' || data.type == 'VENTA')
+        && (data.price is int || data.price is float)
+        && (data.amount is int || data.amount is float)
+        && (data.total is int || data.total is float)
+        && data.strategy is string && data.strategy.size() <= 128
+        && (data.status == 'COMPLETADO' || data.status == 'PENDIENTE' || data.status == 'STOP-LOSS' || data.status == 'TAKE-PROFIT');
+    }
+
+    // 3. ChatMessage Entity Validation Blueprint
+    function isValidChatMessage(data) {
+      return data.keys().hasAll(['id', 'userUid', 'role', 'text', 'timestamp'])
+        && data.keys().size() == 5
+        && data.id is string && data.id.size() <= 128
+        && data.userUid is string && data.userUid.size() <= 128
+        && (data.role == 'user' || data.role == 'model')
+        && data.text is string && data.text.size() <= 8192
+        && data.timestamp is string && data.timestamp.size() <= 128;
+    }
+
+    // Collection Level Match Guards
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      
+      allow create: if isOwner(userId) && isValidUser(incoming()) && isValidId(userId);
+      allow update: if isOwner(userId) && isValidUser(incoming()) && incoming().uid == existing().uid && isValidId(userId);
+      allow delete: if false;
+
+      // Subcollection: Trade Logs
+      match /trade_logs/{tradeId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidTradeLog(incoming()) && incoming().userUid == userId && isValidId(tradeId);
+        allow update: if isOwner(userId) && isValidTradeLog(incoming()) && incoming().userUid == userId && incoming().id == existing().id && isValidId(tradeId);
+        allow delete: if isOwner(userId);
+      }
+
+      // Subcollection: Chat History Logs
+      match /chat_messages/{messageId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidChatMessage(incoming()) && incoming().userUid == userId && isValidId(messageId);
+        allow update: if false; // Chats are write-once details
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

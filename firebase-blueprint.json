@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with configuration parameters",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Auth UID" },
+        "email": { "type": "string", "description": "Email address" },
+        "virtualCapital": { "type": "integer", "description": "Simulated initial or current balance" },
+        "currentPlan": { "type": "string", "description": "Subscription plan name" },
+        "riskLevel": { "type": "string", "description": "Risk profile level" },
+        "activeStrategyId": { "type": "string", "description": "Currently active neural strategy ID" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account registration time" }
+      },
+      "required": ["uid", "email", "virtualCapital", "currentPlan", "riskLevel", "activeStrategyId"]
+    },
+    "TradeLog": {
+      "title": "TradeLog",
+      "description": "Historical record of simulated or real algorithmic transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique trade ID" },
+        "userUid": { "type": "string", "description": "Reference UID to owner" },
+        "timestamp": { "type": "string", "description": "Locale ISO date-time or time representation" },
+        "symbol": { "type": "string", "description": "Asset ticker symbol" },
+        "type": { "type": "string", "enum": ["COMPRA", "VENTA"] },
+        "price": { "type": "number", "description": "Execution unit price" },
+        "amount": { "type": "number", "description": "Purchased or sold amount" },
+        "total": { "type": "number", "description": "Total order volume" },
+        "strategy": { "type": "string", "description": "Algorithmic decision rules name" },
+        "status": { "type": "string", "enum": ["COMPLETADO", "PENDIENTE", "STOP-LOSS", "TAKE-PROFIT"] }
+      },
+      "required": ["id", "userUid", "timestamp", "symbol", "type", "price", "amount", "total", "strategy", "status"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A single AI chat response or prompt segment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userUid": { "type": "string", "description": "Author UID" },
+        "role": { "type": "string", "enum": ["user", "model"] },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "userUid", "role", "text", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Global user profiles"
+    },
+    "/users/{userId}/trade_logs/{tradeId}": {
+      "schema": "TradeLog",
+      "description": "Historical trade orders index"
+    },
+    "/users/{userId}/chat_messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Persistent conversational flow buffers"
+    }
+  }
+}

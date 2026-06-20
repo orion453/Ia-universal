@@ -1,0 +1,6 @@
+{
+  "name": "Adexa IA Universal de Inversiones",
+  "description": "Plataforma global de inversión con análisis predictivo, trading automatizado por inteligencia artificial, laboratorio de backtesting, simulador de distribución de utilidades y asistente financiero interactivo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

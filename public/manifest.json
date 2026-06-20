@@ -1,0 +1,18 @@
+{
+  "name": "Adexa IA Inversiones",
+  "short_name": "Adexa",
+  "description": "Módulo de recomendación y simulador de carteras de inversión inteligente con análisis NLP.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
